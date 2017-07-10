@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Auth;
 
-class SubMenu extends Model
+class Menus extends Model
 {
-    protected $table = 'submenu';
+    protected $table = 'menus';
 
     protected $primaryKey = 'id';
 
-    protected $fillable = ['name', 'menu_id', 'url', 'access', 'parent_id', 'flag', 'remark', 'sorting'];
+    protected $fillable = ['name', 'access'];
 
     public static function boot() {
 

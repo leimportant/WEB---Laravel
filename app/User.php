@@ -38,4 +38,9 @@ class User extends Model implements AuthenticatableContract,
 // @can('create-user') // in Blade Templates
 // $user->can('create-user'); // via Eloquent
 
+    public function isOnline()
+    {
+        return Cache::has('user-is-online-' . $this->id);
+    }
+
 }

@@ -43,4 +43,56 @@ class Padimasagreement extends Model
     {
         return $query->wherein('company_type', ['P-AGEN', 'P-DIST'])->wherein('flag', ['0']);
     }
+
+    public function bank0()
+    {
+        return $this->belongsTo(Bank::class, 'bank_id');
+    }
+    public function cooperation()
+    {
+        return $this->belongsTo(OfficeAgreement::class, 'agreement_id');
+    }
+
+     public function adendumAgreements()
+    {
+        return $this->HasMany(AdendumAgreement::class, 'co_agreement_id');
+    }
+
+     
+     public function product1()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_1');
+    }
+
+     public function product2()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_2');
+    }
+
+     public function product3()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_3');
+    }
+
+     public function product4()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_4');
+    }
+
+     public function product5()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_5');
+    }
+
+     public function product6()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_6');
+    }
+
+     public function product7()
+    {
+        return $this->belongsTo(Productdisc::class, 'product_id_7');
+    }
+
+   
 }

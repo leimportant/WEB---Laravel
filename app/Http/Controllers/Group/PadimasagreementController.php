@@ -22,18 +22,19 @@ use App\Models\Area;
 use App\Models\Termpayment;
 use App\Models\Officeagreement;
 use App\Models\Productdisc;
+use File;
 
 class PadimasagreementController extends Controller
 {
 	public function index()
     {
-     if (! Gate::allows('create-agreement')) {
+       if (! Gate::allows('padimas-agreement.create')) {
             return abort(401);
         }
         $datas = DB::table('cooperation_agreement')->where('company_type', 'P-DIST')->get();
         $waiting = DB::table('cooperation_agreement')->select(DB::raw('count(doc_id) as doc_id'))
                         ->wherein('company_type', ['P-AGEN', 'P-DIST'])
-                        ->wherein('flag', ['0', '3'])
+                        ->wherein('flag', ['0', '200'])
                         ->get();
 
         return view('site.group.padimas-agreement.index', compact(['datas', 'waiting']));
@@ -41,7 +42,7 @@ class PadimasagreementController extends Controller
 
     public function create()
     {
-        if (! Gate::allows('create-agreement')) {
+         if (! Gate::allows('padimas-agreement.create')) {
             return abort(401);
         }
         $relations = [
@@ -52,7 +53,7 @@ class PadimasagreementController extends Controller
 
      public function store(Request $request)
     {
-        if (! Gate::allows('create-agreement')) {
+        if (! Gate::allows('padimas-agreement.create')) {
             return abort(401);
         }
         $this->validate($request, [
@@ -94,7 +95,7 @@ class PadimasagreementController extends Controller
 
     public function edit($doc_id)
     {
-      if (! Gate::allows('create-agreement')) {
+       if (! Gate::allows('padimas-agreement.edit')) {
             return abort(401);
         }
         $relations = [
@@ -139,7 +140,7 @@ class PadimasagreementController extends Controller
 
     public function update(Request $request, $doc_id)
     {
-       if (! Gate::allows('create-agreement')) {
+       if (! Gate::allows('padimas-agreement.edit')) {
             return abort(401);
         }
 
@@ -236,24 +237,35 @@ class PadimasagreementController extends Controller
         return redirect()->route('padimas-agreement.index');
     }
 
-    public function viewpdf($doc_id)
+    public function vpdf($doc_id)
     {
-      if (! Gate::allows('create-agreement')) {
+       if (! Gate::allows('padimas-agreement.admin')) {
             return abort(401);
         }
         $relations = [
             'bank0' => Bank::get()->pluck('name_bank', 'id')->prepend('Please select', ''),
             'top0' => Termpayment::get()->pluck('name', 'id')->prepend('Please select', ''),
         ];
+
+       
         $data = Padimasagreement::findOrFail($doc_id);
 
-        $date = date('Y-m-d');
-        $filename = $data->contract_id . '.pdf';
-        $view =  \View::make('site.group.padimas-agreement.cover_agen', compact('data', 'date', 'cover_agen'))->render();
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($view)->setPaper('A4', 'portrait');
-        $pdf->setOptions(['defaultFont' => 'times']);
-        return $pdf->download($filename);
+        $padimas  =  DB::table('product_price_padimas')->where('area', $data->area )->get();
+        $html2pdf = base_path() . '\vendor\mpdf\mpdf\mpdf.php';
+        File::requireOnce($html2pdf);
+        $html2pdf = new \mPDF('utf-8','a4', 0, 'times', 
+          30, //margin left
+          28, // margin right
+          27, // margin top
+          25, //margin bottom 
+          '', 12, 'P' );
+        $cover =  view('site.group.padimas-agreement.cover_distributor', compact(['data']));
+
+        $content = view('site.group.padimas-agreement.distributor_full', compact(['data', 'padimas']) + $relations);
+        $html2pdf->WriteHTML($cover);
+        $html2pdf->SetFooter('Halaman {PAGENO} / {nbpg}');
+        $html2pdf->WriteHTML($content);
+        $html2pdf->Output();
     }
 
     public function destroy($doc_id)

@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Auth;
 
-class SubMenu extends Model
+class Unit extends Model
 {
-    protected $table = 'submenu';
+    protected $table = 'm_unit';
 
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'unit_id'; 
 
-    protected $fillable = ['name', 'menu_id', 'url', 'access', 'parent_id', 'flag', 'remark', 'sorting'];
+    public $incrementing = false;
+
+    protected $fillable = ['unit_id', 'unit_name'];
 
     public static function boot() {
 
@@ -24,12 +25,7 @@ class SubMenu extends Model
 		    {
 		      $post->updated_by = Auth::user()->id;
 		    });
-		}
+	}
 
-	 public function menu()
-    {
-        return $this->belongsTo(Menu::class);
-    }
 	 
 }
-

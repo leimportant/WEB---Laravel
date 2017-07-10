@@ -19,12 +19,13 @@ use Carbon\Carbon;
 use App\Models\Bank;
 use App\Models\Termpayment;
 use App\Models\Officeagreement;
+use File;
 
 class GarmeliaagreementController extends Controller
 {
 	public function index()
     {
-     if (! Gate::allows('create-agreement')) {
+     if (! Gate::allows('garmelia-agreement.create')) {
             return abort(401);
         }
         $datas = DB::table('cooperation_agreement')->wherein('company_type', ['G-AGEN', 'G-DIST'])->get();
@@ -38,7 +39,7 @@ class GarmeliaagreementController extends Controller
 
     public function create()
     {
-        if (! Gate::allows('create-agreement')) {
+          if (! Gate::allows('garmelia-agreement.create')) {
             return abort(401);
         }
         $relations = [
@@ -49,7 +50,7 @@ class GarmeliaagreementController extends Controller
 
      public function store(Request $request)
     {
-        if (! Gate::allows('create-agreement')) {
+           if (! Gate::allows('garmelia-agreement.create')) {
             return abort(401);
         }
         $this->validate($request, [
@@ -87,9 +88,10 @@ class GarmeliaagreementController extends Controller
 
     public function edit($doc_id)
     {
-      if (! Gate::allows('create-agreement')) {
+         if (! Gate::allows('garmelia-agreement.create')) {
             return abort(401);
         }
+        
         $relations = [
             'bank0' => Bank::get()->pluck('name_bank', 'id')->prepend('Please select', ''),
         ];
@@ -100,7 +102,7 @@ class GarmeliaagreementController extends Controller
 
     public function view($doc_id)
     {
-      if (! Gate::allows('create-agreement')) {
+     if (! Gate::allows('garmelia-agreement.create')) {
             return abort(401);
         }
         $relations = [
@@ -218,33 +220,60 @@ class GarmeliaagreementController extends Controller
         return redirect()->route('garmelia-agreement.index');
     }
 
-    public function viewpdf($doc_id)
+    public function vpdf_dist($doc_id)
     {
-      if (! Gate::allows('create-agreement')) {
+       if (! Gate::allows('garmelia-agreement.create')) {
             return abort(401);
         }
-        $relations = [
+         $relations = [
             'bank0' => Bank::get()->pluck('name_bank', 'id')->prepend('Please select', ''),
             'top0' => Termpayment::get()->pluck('name', 'id')->prepend('Please select', ''),
         ];
-        $data = GarmeliaAgreement::findOrFail($doc_id);
+         $data = GarmeliaAgreement::findOrFail($doc_id);
 
-        $date = date('Y-m-d');
-        $filename = $data->contract_id . '.pdf';
-        $cover =  \View::make('site.group.garmelia-agreement.cover_agen', compact('data', 'date', 'cover_agen'))->render();
-        $content =  \View::make('site.group.garmelia-agreement.agen_full', compact('data', 'agen_full'))->render();
-        $pdf = \App::make('dompdf.wrapper');
-        $loadFull = $cover . '' . $content; 
-        // $pdf->loadHTML($cover)->setPaper('A4', 'portrait');
-        $pdf->loadHTML($loadFull)->setPaper('A4', 'portrait');
-        $pdf->setOptions(['defaultFont' => 'times', "isPhpEnabled", true]);
-        $pdf->output();
-        $dom_pdf = $pdf->getDomPDF();
+        $html2pdf = base_path() . '\vendor\mpdf\mpdf\mpdf.php';
+        File::requireOnce($html2pdf);
+        $html2pdf = new \mPDF('utf-8','a4', 0, 'times', 
+          30, //margin left
+          29, // margin right
+          27, // margin top
+          25, //margin bottom 
+          '', 12, 'P' );
+        $cover =  view('site.group.garmelia-agreement.cover_distributor', compact(['data']));
 
-        $canvas = $dom_pdf ->get_canvas();
-        $canvas->page_text(0, 0, "Halaman {PAGE_NUM} of {PAGE_COUNT}", null, 10, array(0, 0, 0));
+        $content = view('site.group.garmelia-agreement.distributor_full', compact(['data']) + $relations);
+        $html2pdf->WriteHTML($cover);
+        $html2pdf->SetFooter('Halaman {PAGENO} / {nbpg}');
+        $html2pdf->WriteHTML($content);
+        $html2pdf->Output();
+    }
 
-        return $pdf->download($filename);
+     public function vPdf_agen($doc_id)
+    {
+      if (! Gate::allows('garmelia-agreement.create')) {
+            return abort(401);
+        }
+         $relations = [
+            'bank0' => Bank::get()->pluck('name_bank', 'id')->prepend('Please select', ''),
+            'top0' => Termpayment::get()->pluck('name', 'id')->prepend('Please select', ''),
+        ];
+         $data = GarmeliaAgreement::findOrFail($doc_id);
+
+        $html2pdf = base_path() . '\vendor\mpdf\mpdf\mpdf.php';
+        File::requireOnce($html2pdf);
+        $html2pdf = new \mPDF('utf-8','a4', 0, 'times', 
+          30, //margin left
+          29, // margin right
+          27, // margin top
+          25, //margin bottom 
+          '', 12, 'P' );
+        $cover =  view('site.group.garmelia-agreement.cover_agen', compact(['data']));
+
+        $content = view('site.group.garmelia-agreement.agen_full', compact(['data']) + $relations);
+        $html2pdf->WriteHTML($cover);
+        $html2pdf->SetFooter('Halaman {PAGENO} / {nbpg}');
+        $html2pdf->WriteHTML($content);
+        $html2pdf->Output();
     }
 
     public function destroy($doc_id)

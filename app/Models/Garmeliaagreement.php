@@ -44,4 +44,14 @@ class Garmeliaagreement extends Model
         return $query->wherein('company_type', ['G-AGEN', 'G-DIST'])->wherein('flag', ['0']);
     }
 
+       public function cooperation()
+    {
+        return $this->belongsTo(OfficeAgreement::class, 'agreement_id');
+    }
+
+     public function bank0()
+    {
+        return $this->belongsTo(Bank::class, 'bank_id');
+    }
+
 }
